@@ -17,18 +17,6 @@ import (
 
 var defaultRoot = "/debug/appstats"
 
-// Index responds to a request for /debug/appstats with the appstats HTML page
-// which shows a live visualization of the statistics sent by the application.
-var handleIndex = HandleIndex(defaultRoot)
-
-var handleStats = HandleStats()
-
-var handleDoWork = HandleDoWork()
-
-var handleGC = HandleGC()
-
-var lastMod time.Time
-
 // HandleIndex returns an index appstats handler rooted at root. It's useful if
 // you desire your server to responds with the appstats HTML page at a
 func HandleIndex(root string) http.Handler {
@@ -37,10 +25,6 @@ func HandleIndex(root string) http.Handler {
 	if err != nil {
 		log.Println(err)
 	}
-	// fi, err := fp.Stat()
-	// if err != nil {
-	// 	log.Println(err)
-	// }
 	return handleStaticDev(prefix)
 }
 
@@ -60,10 +44,10 @@ func RegisterAppStats() {
 }
 
 func Register(mux *http.ServeMux) {
-	mux.Handle(defaultRoot+"/", handleIndex)
-	mux.Handle(defaultRoot+"/stats", handleStats)
-	mux.Handle(defaultRoot+"/do/work", handleDoWork)
-	mux.Handle(defaultRoot+"/do/gc", handleGC)
+	mux.Handle(defaultRoot+"/", HandleIndex(defaultRoot))
+	mux.Handle(defaultRoot+"/stats", handleStats())
+	mux.Handle(defaultRoot+"/do/work", handleDoWork())
+	mux.Handle(defaultRoot+"/do/gc", handleGC())
 }
 
 type stats struct {
@@ -73,42 +57,6 @@ type stats struct {
 	CurrentTime  time.Time        `json:"current_time"`
 	Memory       runtime.MemStats `json:"memory"`
 	LastGC       time.Time        `json:"last_gc"`
-}
-
-func writeStatsTicker(w io.Writer, frequency time.Duration) error {
-	tick := time.NewTicker(frequency)
-	defer tick.Stop()
-	stats := stats{
-		GoVersion: runtime.Version(),
-	}
-	for range tick.C {
-		runtime.ReadMemStats(&stats.Memory)
-		stats.NumGoroutine = runtime.NumGoroutine()
-		stats.NumCPU = runtime.NumCPU()
-		stats.CurrentTime = time.Now()
-		statsData, err := json.Marshal(stats)
-		if err != nil {
-			return err
-		}
-		_, err = w.Write(statsData)
-		if err != nil {
-			return err
-		}
-	}
-	panic("unreachable")
-}
-
-func HandleStatsTicker() http.
-	Handler {
-	frequency := time.Second * 5
-	fn := func(w http.ResponseWriter, r *http.Request) {
-		if err := writeStatsTicker(w, frequency); err != nil {
-			code := http.StatusInternalServerError
-			http.Error(w, http.StatusText(code), code)
-			return
-		}
-	}
-	return http.HandlerFunc(fn)
 }
 
 func writeStats(w io.Writer) error {
@@ -131,7 +79,7 @@ func writeStats(w io.Writer) error {
 	return nil
 }
 
-func HandleStats() http.Handler {
+func handleStats() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("content-type", "application/json;utf=8")
 		if err := writeStats(w); err != nil {
@@ -143,7 +91,7 @@ func HandleStats() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func HandleDoWork() http.Handler {
+func handleDoWork() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		v, err := url.ParseQuery(r.URL.RawQuery)
 		if err != nil {
@@ -205,7 +153,7 @@ func doWork(count int) {
 	log.Printf("Worked with %d items. Done.\n", count)
 }
 
-func HandleGC() http.Handler {
+func handleGC() http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
 		runtime.GC()
 		http.Redirect(w, r, defaultRoot+"/", http.StatusFound)
