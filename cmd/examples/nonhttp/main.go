@@ -8,14 +8,14 @@ import (
 	"github.com/cagnosolutions/appstats/pkg/appstats"
 )
 
-func main() {
-
+func init() {
 	// register and run
 	appstats.Serve(":8080")
+}
 
+func main() {
 	// simulate doing some work
 	doWork()
-
 }
 
 func doWork() {

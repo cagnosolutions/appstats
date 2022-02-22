@@ -1,6 +1,3 @@
-# appstats
-Go web based application profiler
-
 ## Overview
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent libero turpis, aliquam quis consequat ac, volutpat 
 et arcu. Nullam varius, ligula eu venenatis dignissim, lectus ligula ullamcorper odio, in rhoncus nisi nisl congue sem. 
@@ -9,34 +6,11 @@ nunc, ut viverra ex. Nam ac lacus at quam rhoncus finibus. Praesent efficitur, a
 erat malesuada neque, vel euismod dui leo a nisl. Donec a eleifend dui. Maecenas nec leo odio. In maximus convallis 
 ligula eget sodales. Nullam a mi hendrerit, finibus dolor eu, pellentesque ligula. Proin ultricies vitae neque sit amet 
 tempus.
-Sed a purus enim. Maecenas maximus placerat risus, at commodo libero consectetur sed. Nullam pulvinar lobortis augue in 
-pulvinar. Aliquam erat volutpat. Vestibulum eget felis egestas, sollicitudin sem eu, venenatis metus. Nam ac eros vel 
-sem suscipit facilisis in ut ligula. Nulla porta eros eu arcu efficitur molestie. Proin tristique eget quam quis 
-ullamcorper.
-
-Integer pretium tellus non sapien euismod, et ultrices leo placerat. Suspendisse potenti. Aenean pulvinar pretium diam, 
-lobortis pretium sapien congue quis. Fusce tempor, diam id commodo maximus, mi turpis rhoncus orci, ut blandit ipsum 
-turpis congue dolor. Aenean lobortis, turpis nec dignissim pulvinar, sem massa bibendum lorem, ut scelerisque nibh odio
-sed odio. Sed sed nulla lectus. Donec vitae ipsum dolor. Donec eu gravida lectus. In tempor ultrices malesuada. Cras 
-sodales in lacus et volutpat. Vivamus nibh ante, egestas vitae faucibus id, consectetur at augue. Pellentesque habitant 
-morbi tristique senectus et netus et malesuada fames ac turpis egestas. Pellentesque quis velit non quam convallis 
-molestie sit amet sit amet metus.
-
-Aenean eget sapien nisl. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec maximus nisi in nunc 
-pellentesque imperdiet. Aliquam erat volutpat. Quisque bibendum tellus ac odio dictum vulputate. Sed imperdiet enim 
-eget tortor vehicula, nec vehicula erat lacinia. Praesent et bibendum turpis. Mauris ac blandit nulla, ac dignissim 
-quam. Ut ut est placerat quam suscipit sodales a quis lacus. Praesent hendrerit mattis diam et sodales. In a augue sit 
-amet odio iaculis tempus sed a erat.
 
 ## Technical Notes
 Donec quis nisi tellus. Nam hendrerit purus ligula, id bibendum metus pulvinar sed. Nulla eu neque lobortis, porta elit
 quis, luctus purus. Vestibulum et ultrices nulla. Curabitur sagittis, sem sed elementum aliquam, dui mauris interdum
-libero, ullamcorper convallis urna tortor ornare metus. Integer non nibh id diam accumsan tincidunt. Quisque sed felis
-aliquet, luctus dolor vitae, porta nibh. Vestibulum ac est mollis, sodales erat et, pharetra nibh. Maecenas porta diam
-in elit venenatis, sed bibendum orci feugiat. Suspendisse diam enim, dictum quis magna sed, aliquet porta turpis. Etiam
-scelerisque aliquam neque, vel iaculis nibh laoreet ac. Sed placerat, arcu eu feugiat ullamcorper, massa justo aliquet
-lorem, id imperdiet neque ipsum id diam. Vestibulum semper felis urna, sit amet volutpat est porttitor nec. Phasellus
-lacinia volutpat orci, id eleifend ipsum semper non.
+libero, ullamcorper convallis urna tortor ornare metus.
 
 ## Requirements
 Requires Go version 1.17.x or later, no external dependencies are required.
@@ -54,14 +28,6 @@ change between major releases but not for patches and minor releases.
     - [Installing](#installing)
     - [Importing](#importing)
     - [How To Use](#how-to-use)
-    - [Using pages](#using-pages)
-    - [Using records](#using-records)
-    - [Swapping pages](#swapping-pages)
-    - [Types](#types)
-        - [RecordID](#recordid)
-        - [Page](#page)
-        - [Page Manager](#page-manager)
-        - [Page Buffer](#page-buffer)
 
 ## Getting Started
 
@@ -79,13 +45,36 @@ import "github.com/cagnosolutions/appstats"
 ```
 
 ### How To Use
-The `*PageManager` is one of the main top-level objects in this package.
-It is represented as a single file on your disk. To use the manager use
-the `OpenPageManager(path)` method of the pager package.
+If you are already using a http multiplexer simply call the `Register()` any time
+before you call `http.ListenAndServe` and navigate to `/debug/appstats/` to start
+visualizing your application profile. For example:
 ```go
-mgr, err := pager.OpenPageManager("path/data.db")
-if err != nil {
-    panic(err)
+func main() {
+    // setup a new serve mux
+    mux := http.NewServeMux()
+    // add your handlers
+    ...
+    // register appstats with the muxer
+    appstats.Register(mux)
+    // then serve it up
+    log.Panicln(http.ListenAndServe(":8080", mux))
 }
-defer m.Close()
+```
+
+If you with to use appstats, and you are not currently using a http server, no
+problem. Simply call the `Serve()` method in your init or main function and go
+about the rest of your program. The `Serve()` method will add a SIGINT handler
+which requires you to use Ctrl+C to exit your program, so it will not exit early.
+See the example below:
+```go
+func init() {
+    // register and run
+    appstats.Serve(":8080")
+}
+
+func main() {
+    // simulate doing some work
+    doWork()
+	// use ctrl+c to exit main
+}
 ```
