@@ -6,9 +6,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/cagnosolutions/appstats/pkg/appstats/internal/static"
@@ -38,13 +41,24 @@ func handleStaticDev(prefix string) http.Handler {
 	return http.StripPrefix(prefix, http.FileServer(http.Dir(staticPath)))
 }
 
-func RegisterAppStats() {
+func RegisterDefault() {
 	Register(http.DefaultServeMux)
 }
 
 func Register(mux *http.ServeMux) {
 	mux.Handle(defaultRoot+"/", HandleIndex(defaultRoot))
 	mux.Handle(defaultRoot+"/stats", handleStats())
+}
+
+func Serve(addr string) {
+	go func(addr string) {
+		RegisterDefault()
+		handleSigInt(
+			"Visit [localhost%s%s] to view your appstats\n", addr,
+			defaultRoot,
+		)
+		log.Panicln(http.ListenAndServe(addr, nil))
+	}(addr)
 }
 
 type stat struct {
@@ -131,4 +145,15 @@ func handleStats() http.Handler {
 		}
 	}
 	return http.HandlerFunc(fn)
+}
+
+func handleSigInt(msg string, args ...interface{}) {
+	log.Printf(msg, args...)
+	log.Println("Please press ctrl+c to exit.")
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		os.Exit(1)
+	}()
 }
