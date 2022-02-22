@@ -27,7 +27,7 @@ func HandleIndex(root string) http.Handler {
 	if err != nil {
 		log.Println(err)
 	}
-	return handleStaticDev(prefix)
+	return handleStatic(prefix)
 }
 
 // production static file handler

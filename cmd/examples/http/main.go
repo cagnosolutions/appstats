@@ -9,9 +9,12 @@ import (
 
 func main() {
 
+	// setup a server mux
+	mux := http.NewServeMux()
+
 	// register with the default serve mux
-	appstats.RegisterAppStats()
+	appstats.Register(mux)
 
 	// call listen and serve as you normally would
-	log.Panicln(http.ListenAndServe(":8181", nil))
+	log.Panicln(http.ListenAndServe(":8080", mux))
 }
