@@ -3,6 +3,7 @@ package appstats
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -27,7 +28,8 @@ func HandleIndex(root string) http.Handler {
 	if err != nil {
 		log.Println(err)
 	}
-	return handleStatic(prefix)
+	// return handleStatic(prefix)
+	return handleStaticDev(prefix)
 }
 
 // production static file handler
@@ -48,6 +50,7 @@ func RegisterDefault() {
 func Register(mux *http.ServeMux) {
 	mux.Handle(defaultRoot+"/", HandleIndex(defaultRoot))
 	mux.Handle(defaultRoot+"/stats", handleStats())
+	mux.Handle(defaultRoot+"/api", handleAPI())
 }
 
 func Serve(addr string) {
@@ -141,6 +144,58 @@ func handleStats() http.Handler {
 		if err := writeStats(w); err != nil {
 			code := http.StatusInternalServerError
 			http.Error(w, http.StatusText(code), code)
+			return
+		}
+	}
+	return http.HandlerFunc(fn)
+}
+
+func handleAPI() http.Handler {
+	fn := func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("content-type", "application/json;utf=8")
+			if err := writeStats(w); err != nil {
+				log.Printf("got get request, error writing stats")
+				code := http.StatusInternalServerError
+				http.Error(w, http.StatusText(code), code)
+				return
+			}
+		}
+		if r.Method == http.MethodPost {
+			r.ParseForm()
+			data, err := io.ReadAll(r.Body)
+			if err != nil {
+				log.Printf("got post request, error reading request body")
+				code := http.StatusInternalServerError
+				http.Error(w, http.StatusText(code), code)
+				return
+			}
+			var mdata interface{}
+			err = json.Unmarshal(data, &mdata)
+			if err != nil {
+				log.Printf("got post request, error unmarshaling data from request body")
+				code := http.StatusInternalServerError
+				http.Error(w, http.StatusText(code), code)
+				return
+			}
+			w.Header().Set("content-type", "application/json;utf=8")
+			b, err := json.Marshal(
+				map[string]interface{}{
+					"api": map[string]interface{}{
+						"name":         "app stats",
+						"version":      1.0,
+						"current_time": time.Now(),
+						"received":     mdata,
+					},
+				},
+			)
+			if err != nil {
+				log.Printf("got post request, marshaling map")
+				code := http.StatusInternalServerError
+				http.Error(w, err.Error(), code)
+				return
+			}
+			fmt.Fprintf(w, "%s", b)
 			return
 		}
 	}

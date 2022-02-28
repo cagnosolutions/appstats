@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="shortcut icon" href="/static/img/favicon.ico">
+    <!--[if lt IE 9]>
+    <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="//cdn.datatables.net/1.11.4/css/jquery.dataTables.min.css"/>
+    <link href='//fonts.googleapis.com/css?family=Lato:100,300,400,700,900,100italic,300italic,400italic,700italic,900italic'
+          rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="../css/main.css"/>
+    <title>App Stats</title>
+</head>
+
+<body>
+
+<section class="p-3">
+    <div class="container">
+        <div class="row">
+            <div class="col col-6 offset-3">
+                <div class="card">
+                    <div class="card-header text-center">
+                        jQuery Ajax Post Example
+                    </div>
+                    <div class="card-body">
+                        <!-- beg:form -->
+                        <form id="my-post-form" method="post" action="/debug/appstats/api">
+                            <div class="mb-3">
+                                <label for="input-field" class="form-label">Input Field</label>
+                                <input type="text" name="input-field" class="form-control"
+                                       id="input-field" aria-describedby="input-field-help">
+                                <div id="input-field-help" class="form-text">This is just some nifty help text.</div>
+                            </div>
+                            <button type="submit" class="btn btn-success">Submit</button>
+                        </form>
+                        <!-- end:form -->
+                    </div>
+                </div>
+            </div>
+            <div class="col col-6 p-3 offset-3">
+                <div class="card">
+                    <div class="card-header text-center">
+                        jQuery Ajax Post Example Output
+                    </div>
+                    <div class="card-body">
+                        <div id="post-example-output"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- scripts and libs -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/just-validate@3.3.1/dist/just-validate.production.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+<!-- scripts and libs -->
+
+<!-- first, initialize our global file in case anything else relies on it -->
+<script src="../js/global.js"></script>
+<script src="scratch.js"></script>
+<!-- scripts -->
+
+</body>
+
+<!-- footer -->
+<nav class="navbar fixed-bottom navbar-light bg-light">
+    <div class="container">
+        <a class="navbar-brand" href="#"></a>
+        <span class="ms-auto">© 2022 <span class="text-muted">Cagno Solutions, LLC</span></span>
+    </div>
+</nav>
+<!-- footer -->
+
+</html>
