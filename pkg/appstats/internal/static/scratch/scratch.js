@@ -27,6 +27,7 @@
             // console.log("done -> ", data, status, jqxhr);
            $('div[id="post-example-output"]').text(data.api.received.api);//.empty().append();
         })
+
         // happens on error, note: if you are using a jQuery version
         // earlier than version 3.4 then fail might be called error.
         .fail(function(jqxhr, status, error) {
