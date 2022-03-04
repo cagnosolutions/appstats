@@ -15,6 +15,9 @@ func main() {
 	// register with the default serve mux
 	appstats.Register(mux)
 
+	hr := appstats.NewHotReloader("cmd/examples", 3)
+	hr.Watch()
+
 	// call listen and serve as you normally would
-	log.Panicln(http.ListenAndServe(":8080", mux))
+	log.Panicln(http.ListenAndServe(":9090", mux))
 }
