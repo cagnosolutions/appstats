@@ -3,14 +3,18 @@ package main
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
 	"time"
 
 	"github.com/cagnosolutions/appstats/pkg/appstats"
 )
 
 func init() {
+
+	debug.SetMemoryLimit(5 << 20)
+
 	// register and run
-	appstats.Serve(":8080")
+	appstats.Serve(":8181")
 }
 
 func main() {
