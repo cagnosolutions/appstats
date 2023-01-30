@@ -56,12 +56,9 @@ func Register(mux *http.ServeMux) {
 func Serve(addr string) {
 	go func(addr string) {
 		RegisterDefault()
-		handleSigInt(
-			"Visit [localhost%s%s] to view your appstats\n", addr,
-			defaultRoot,
-		)
 		log.Panicln(http.ListenAndServe(addr, nil))
 	}(addr)
+	HandleSignalInterrupt("Visit [localhost%s%s] to view your appstats\n", addr, defaultRoot)
 }
 
 type stat struct {
@@ -202,7 +199,7 @@ func handleAPI() http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-func handleSigInt(msg string, args ...interface{}) {
+func HandleSignalInterrupt(msg string, args ...interface{}) {
 	log.Printf(msg, args...)
 	log.Println("Please press ctrl+c to exit.")
 	c := make(chan os.Signal)
