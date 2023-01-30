@@ -27,6 +27,7 @@ function getStats() {
         objectsChart.pushData(d);
         updateNumGORoutineBadge(d);
         updateLastGCBadge(d);
+        updateCode(d);
         jsonData = d;
     })
     .fail(function(){
@@ -54,4 +55,8 @@ function updateNumGORoutineBadge(d) {
 
 function updateLastGCBadge(d) {
     $('span[id="last-gc"]')[0].innerText=formatDate(d.last_gc);
+}
+
+function updateCode(d) {
+    $('pre[id="code"]')[0].innerText=d.gc_trace;
 }

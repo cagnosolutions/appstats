@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -65,9 +66,13 @@ type stat struct {
 	GoVersion    string           `json:"go_version"`
 	NumGoroutine int              `json:"num_goroutine"`
 	NumCPU       int              `json:"num_cpu"`
+	StartedTime  time.Time        `json:"started_time"`
 	CurrentTime  time.Time        `json:"current_time"`
 	Memory       runtime.MemStats `json:"memory"`
 	LastGC       time.Time        `json:"last_gc"`
+	NumForcedGC  int              `json:"num_forced_gc"`
+	ForcedGC     bool             `json:"forced_gc"`
+	GCTrace      string           `json:"gc_trace"`
 }
 
 var stats *stat
@@ -78,7 +83,7 @@ var statsPool = sync.Pool{
 			GoVersion:    runtime.Version(),
 			NumGoroutine: runtime.NumGoroutine(),
 			NumCPU:       runtime.NumCPU(),
-			CurrentTime:  time.Now(),
+			StartedTime:  time.Now(),
 		}
 	},
 }
@@ -120,8 +125,14 @@ func putBuffer(b *buffer) {
 func writeStats(w io.Writer) error {
 	stats = getStats()
 	defer putStats(stats)
+	stats.CurrentTime = time.Now()
 	runtime.ReadMemStats(&stats.Memory)
 	stats.LastGC = time.Unix(0, int64(stats.Memory.LastGC))
+	if stats.NumForcedGC < int(stats.Memory.NumForcedGC) {
+		stats.NumForcedGC = int(stats.Memory.NumForcedGC)
+		stats.ForcedGC = true
+	}
+	encodeGCTrace(stats)
 	buff = getBuffer()
 	defer putBuffer(buff)
 	err := buff.enc.Encode(stats)
@@ -208,4 +219,64 @@ func HandleSignalInterrupt(msg string, args ...interface{}) {
 		<-c
 		os.Exit(1)
 	}()
+}
+
+func encodeGCTrace(s *stat) {
+	// gc # @#s #%: #->#-># MB, # MB goal, # MB stacks, #MB globals, # P
+	var sb strings.Builder
+
+	// the GC number, incremented at each GC
+	// gc #         the GC number, incremented at each GC
+	sb.WriteString("gc ")
+	sb.WriteString(strconv.Itoa(int(s.Memory.NumGC)))
+	sb.WriteString(" ")
+
+	// time in seconds since program start
+	// @#s          time in seconds since program start
+	sb.WriteString(fmt.Sprintf("@%2.2fs ", time.Since(s.StartedTime).Seconds()))
+
+	// percentage of time spent in the GC since program start
+	// #%           percentage of time spent in GC since program start
+	// sb.WriteString(strconv.Itoa(int(uint64(time.Since(s.StartedTime).Nanoseconds()) / s.Memory.PauseTotalNs)))
+	sb.WriteString(fmt.Sprintf("%0.2f", s.Memory.GCCPUFraction))
+	sb.WriteString("%: ")
+
+	// heap size at gc start, and gc end and live heap
+	// #->#-># MB   heap size at GC start, at GC end, and live heap
+	sb.WriteString(strconv.Itoa(int(s.Memory.HeapAlloc / 1024 / 1024)))
+	sb.WriteString("->")
+	sb.WriteString(strconv.Itoa(int(s.Memory.HeapReleased / 1024 / 1024)))
+	sb.WriteString("->")
+	sb.WriteString(strconv.Itoa(int(s.Memory.HeapObjects / 1024 / 1024)))
+	sb.WriteString(" MB, ")
+
+	// goal heap size
+	// # MB goal    goal heap size
+	sb.WriteString(strconv.Itoa(int(s.Memory.NextGC / 1024 / 1024)))
+	sb.WriteString(" MB goal, ")
+
+	// estimated scannable stack size
+	// # MB stacks  estimated scannable stack size
+	sb.WriteString(strconv.Itoa(int(s.Memory.StackInuse / 1024 / 1024)))
+	sb.WriteString(" MB stacks, ")
+
+	// scannable global size
+	// # MB globals
+	sb.WriteString(strconv.Itoa(int(s.Memory.HeapAlloc+s.Memory.StackInuse) / 1024 / 1024))
+	sb.WriteString(" MB globals, ")
+
+	// number of processors used
+	// # P
+	sb.WriteString(strconv.Itoa(s.NumCPU))
+	sb.WriteString(" P")
+
+	// it means this GC was forced by a runtime.GC() call
+	if s.ForcedGC {
+		sb.WriteString(" (forced)")
+	}
+
+	// end of line
+	sb.WriteString("\n")
+
+	s.GCTrace = sb.String()
 }
